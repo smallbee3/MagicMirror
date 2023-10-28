@@ -97,6 +97,15 @@ let config = {
 				broadcastNewsUpdates: true
 			}
 		},
+		{
+			module: 'MMM-BackgroundSlideshow',
+			position: 'fullscreen_below',
+			config: {
+				imagePaths: ['modules/MMM-BackgroundSlideshow/exampleImages/'],
+				transitionImages: true,
+				randomizeImageOrder: true
+			}
+		}
 	]
 };
 
