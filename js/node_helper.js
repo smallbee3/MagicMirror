@@ -11,7 +11,10 @@ const Class = require("./class");
 const NodeHelper = Class.extend({
 	init() {
 		Log.log("Initializing new module helper ...");
+		this.connectedSockets = {}; // Store connected sockets
 	},
+
+	constructor() {},
 
 	loaded() {
 		Log.log(`Module helper loaded: ${this.name}`);
@@ -65,6 +68,17 @@ const NodeHelper = Class.extend({
 		this.io.of(this.name).emit(notification, payload);
 	},
 
+	sendSocketNotificationToClient(clientSocketId, notification, payload) {
+		console.log("3 clientSocketId: ", clientSocketId);
+		const clientSocket = this.connectedSockets[clientSocketId];
+		if (clientSocket) {
+			clientSocket.emit(notification, payload);
+		} else {
+			// Handle the case where the target socket does not exist or is not connected.
+			// You can log an error or take appropriate action here.
+		}
+	},
+
 	/* setExpressApp(app)
 	 * Sets the express app object for this module.
 	 * This allows you to host files from the created webserver.
@@ -89,9 +103,22 @@ const NodeHelper = Class.extend({
 		Log.log(`Connecting socket for: ${this.name}`);
 
 		io.of(this.name).on("connection", (socket) => {
+			// Store the connected socket with its ID
+			console.log("------------------");
+			console.log("1 socket: ", socket.id);
+			this.connectedSockets[socket.id] = socket;
+
 			// add a catch all event.
 			const onevent = socket.onevent;
+			// console.log('------------------')
+			// console.log('1 this.name: ' ,this.name);
+			const socketName = this.name;
 			socket.onevent = function (packet) {
+				// if (socketName === 'MMM-BackgroundSlideshow') {
+				if (socketName !== "updatenotification") {
+					console.log("------------------");
+					console.log("2 onevent called: ", socketName);
+				}
 				const args = packet.data || [];
 				onevent.call(this, packet); // original call
 				packet.data = ["*"].concat(args);
@@ -101,6 +128,10 @@ const NodeHelper = Class.extend({
 			// register catch all.
 			socket.on("*", (notification, payload) => {
 				if (notification !== "*") {
+					// if (socketName === 'MMM-BackgroundSlideshow') {
+					// 	console.log('------------------')
+					// 	console.log('3 notification: ' , socketName);
+					// }
 					this.socketNotificationReceived(notification, payload);
 				}
 			});
